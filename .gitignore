@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+*.sqlite3
+
+# Django
+*.db
+*.sqlite3
+*.pyc
+*.pyo
+*.pyd
+*.migrations/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+
+# Environment
+.env
+
+# Others
+*.swp
+*.bak
+*.tmp
+
+# Ignore database
+/db.sqlite3
+
+# Ignore compiled files
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore static files cache
+staticfiles/
