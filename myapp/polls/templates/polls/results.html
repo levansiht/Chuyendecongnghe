@@ -1,0 +1,242 @@
+{% extends 'polls/base.html' %} {% block title %}Results: {{
+question.question_text }} - Django Polls{% endblock %} {% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Results Card -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <h1 class="h4 mb-0">
+            <i class="fas fa-chart-bar text-primary"></i> Poll Results
+          </h1>
+          <div>
+            {% if question.category %}
+            <span class="badge me-2 bg-primary">
+              {% if question.category.icon %}
+              <i class="{{ question.category.icon }}"></i>
+              {% endif %} {{ question.category.name }}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <h2 class="h5 mb-4">{{ question.question_text }}</h2>
+
+        <div class="mb-4 text-center">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="bg-light p-3 rounded">
+                <i class="fas fa-vote-yea fa-2x text-primary mb-2"></i>
+                <h3 class="h4 mb-0">{{ total_votes }}</h3>
+                <small class="text-muted"
+                  >Total Vote{{ total_votes|pluralize }}</small
+                >
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="bg-light p-3 rounded">
+                <i class="fas fa-list fa-2x text-info mb-2"></i>
+                <h3 class="h4 mb-0">{{ choices_with_percentages|length }}</h3>
+                <small class="text-muted"
+                  >Option{{ choices_with_percentages|length|pluralize }}</small
+                >
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="bg-light p-3 rounded">
+                <i class="fas fa-calendar-alt fa-2x text-success mb-2"></i>
+                <h3 class="h4 mb-0">{{ question.pub_date|timesince }}</h3>
+                <small class="text-muted">ago</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {% if choices_with_percentages %}
+        <div class="results-container">
+          {% for item in choices_with_percentages %}
+          <div class="result-item mb-4 p-3 border rounded">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="mb-0">{{ item.choice.choice_text }}</h6>
+              <div class="text-end">
+                <span class="badge bg-primary fs-6">
+                  {{ item.choice.votes }} vote{{ item.choice.votes|pluralize }}
+                </span>
+                <small class="text-muted d-block">
+                  {{ item.percentage|floatformat:1 }}%
+                </small>
+              </div>
+            </div>
+
+            <div class="progress" style="height: 25px">
+              <div
+                class="progress-bar bg-primary"
+                role="progressbar"
+                style="width: 70%"
+                aria-valuenow="70"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                70%
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+          <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+          <h4 class="text-muted">No votes yet</h4>
+          <p>Be the first to vote on this poll!</p>
+          <a
+            href="{% url 'polls:detail' question.id %}"
+            class="btn btn-primary"
+          >
+            <i class="fas fa-vote-yea"></i> Vote Now
+          </a>
+        </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-4">
+          <a
+            href="{% url 'polls:detail' question.id %}"
+            class="btn btn-primary"
+          >
+            <i class="fas fa-vote-yea"></i> Vote Again
+          </a>
+          <a href="{% url 'polls:index' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Polls
+          </a>
+          {% if user.is_authenticated and user == question.author %}
+          <a
+            href="{% url 'polls:question_edit' question.id %}"
+            class="btn btn-outline-warning"
+          >
+            <i class="fas fa-edit"></i> Edit Poll
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <!-- Chart Card -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-chart-pie"></i> Visual Results
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="resultsChart" class="vote-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Poll Info -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-info-circle"></i> Poll Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <strong>Created by:</strong>
+          {% if question.author %}
+          <span class="text-primary">{{ question.author.username }}</span>
+          {% else %}
+          <span class="text-muted">Anonymous</span>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <strong>Published:</strong>
+          <span>{{ question.pub_date|date:"F j, Y, g:i a" }}</span>
+        </div>
+        {% if question.was_published_recently %}
+        <div class="alert alert-info alert-sm" role="alert">
+          <i class="fas fa-fire"></i> Recently published
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Share Card -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-share-alt"></i> Share This Poll
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="input-group mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="shareUrl"
+            value="{{ request.build_absolute_uri }}"
+            readonly
+          />
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            onclick="copyToClipboard()"
+          >
+            <i class="fas fa-copy"></i>
+          </button>
+        </div>
+        <small class="text-muted">
+          Share this poll with others to get more votes!
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // Copy URL to clipboard
+  function copyToClipboard() {
+    const shareUrl = document.getElementById("shareUrl");
+    if (shareUrl) {
+      shareUrl.select();
+      shareUrl.setSelectionRange(0, 99999);
+
+      try {
+        document.execCommand("copy");
+        const button = event.target.closest("button");
+        if (button) {
+          const originalHTML = button.innerHTML;
+          button.innerHTML = '<i class="fas fa-check"></i>';
+          button.classList.add("btn-success");
+          button.classList.remove("btn-outline-secondary");
+
+          setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove("btn-success");
+            button.classList.add("btn-outline-secondary");
+          }, 2000);
+        }
+      } catch (err) {
+        alert("Unable to copy to clipboard. Please copy manually.");
+      }
+    }
+  }
+
+  // Simple progress bar animation
+  document.addEventListener("DOMContentLoaded", function () {
+    const progressBars = document.querySelectorAll(".progress-bar");
+    progressBars.forEach((bar) => {
+      bar.style.width = "0%";
+      setTimeout(() => {
+        bar.style.transition = "width 1s ease-in-out";
+        bar.style.width = bar.getAttribute("aria-valuenow") + "%";
+      }, 100);
+    });
+  });
+</script>
+{% endblock %}

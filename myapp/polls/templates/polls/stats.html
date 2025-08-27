@@ -1,0 +1,172 @@
+{% extends 'polls/base.html' %} {% block title %}Statistics - Django Polls{%
+endblock %} {% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="display-4">
+        <i class="fas fa-chart-bar text-primary"></i> Polling Statistics
+      </h1>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Overview -->
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card bg-primary text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-poll fa-3x mb-3"></i>
+        <h2 class="display-4">{{ total_questions }}</h2>
+        <p class="mb-0">Total Questions</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-success text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-vote-yea fa-3x mb-3"></i>
+        <h2 class="display-4">{{ total_votes }}</h2>
+        <p class="mb-0">Total Votes</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-info text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-tags fa-3x mb-3"></i>
+        <h2 class="display-4">{{ total_categories }}</h2>
+        <p class="mb-0">Categories</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-warning text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-clock fa-3x mb-3"></i>
+        <h2 class="display-4">{{ recent_questions }}</h2>
+        <p class="mb-0">This Week</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Recent Questions -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-clock"></i> Recent Questions
+        </h5>
+      </div>
+      <div class="card-body">
+        {% if recent_questions %} {% for question in recent_questions %}
+        <div
+          class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom"
+        >
+          <div>
+            <h6 class="mb-1">
+              <a
+                href="{% url 'polls:detail' question.id %}"
+                class="text-decoration-none"
+              >
+                {{ question.question_text|truncatechars:50 }}
+              </a>
+            </h6>
+            <small class="text-muted">
+              {{ question.pub_date|timesince }} ago
+            </small>
+          </div>
+          <div class="text-end">
+            <span class="badge bg-primary"
+              >{{ question.total_votes }} votes</span
+            >
+          </div>
+        </div>
+        {% endfor %} {% else %}
+        <p class="text-muted">No recent questions</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Statistics -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-chart-pie"></i> Categories
+        </h5>
+      </div>
+      <div class="card-body">
+        {% if category_stats %} {% for category in category_stats %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fw-bold">{{ category.name }}</span>
+            <small class="text-muted">
+              {{ category.question_count }} question{{
+              category.question_count|pluralize }}
+            </small>
+          </div>
+          <div class="progress" style="height: 10px">
+            <div
+              class="progress-bar bg-info"
+              role="progressbar"
+              style="width: 50%"
+            ></div>
+          </div>
+        </div>
+        {% endfor %} {% else %}
+        <p class="text-muted">No categories available</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popular Content -->
+{% if popular_question %}
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-trophy text-warning"></i> Most Popular Poll
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h4>{{ popular_question.question_text }}</h4>
+            <p class="text-muted mb-2">
+              Published {{ popular_question.pub_date|timesince }} ago {% if
+              popular_question.author %}by {{ popular_question.author.username
+              }}{% endif %}
+            </p>
+            <div class="d-flex gap-2">
+              <a
+                href="{% url 'polls:detail' popular_question.id %}"
+                class="btn btn-primary btn-sm"
+              >
+                <i class="fas fa-vote-yea"></i> Vote
+              </a>
+              <a
+                href="{% url 'polls:results' popular_question.id %}"
+                class="btn btn-outline-secondary btn-sm"
+              >
+                <i class="fas fa-chart-bar"></i> View Results
+              </a>
+            </div>
+          </div>
+          <div class="col-md-4 text-center">
+            <div class="display-4 text-primary">
+              {{ popular_question.total_votes }}
+            </div>
+            <small class="text-muted">Total Votes</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %} {% endblock %}
