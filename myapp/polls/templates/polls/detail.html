@@ -1,0 +1,238 @@
+{% extends 'polls/base.html' %} {% block title %}{{ question.question_text }} -
+Django Polls{% endblock %} {% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Question Card -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            {% if question.category %}
+            <span class="badge me-2 bg-primary">
+              {% if question.category.icon %}
+              <i class="{{ question.category.icon }}"></i>
+              {% endif %} {{ question.category.name }}
+            </span>
+            {% endif %}
+            <span class="badge bg-secondary">
+              <i class="fas fa-calendar-alt"></i>
+              {{ question.pub_date|date:"M d, Y g:i A" }}
+            </span>
+          </div>
+          {% if question.author %}
+          <small class="text-muted">
+            <i class="fas fa-user"></i>
+            by {{ question.author.username }}
+          </small>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card-body">
+        <h1 class="card-title h3">{{ question.question_text }}</h1>
+
+        <div class="d-flex justify-content-between text-muted small mb-4">
+          <span>
+            <i class="fas fa-list"></i>
+            {{ choices.count }} choice{{ choices.count|pluralize }}
+          </span>
+          <span>
+            <i class="fas fa-vote-yea"></i>
+            {{ total_votes }} vote{{ total_votes|pluralize }} total
+          </span>
+        </div>
+
+        {% if error_message %}
+        <div class="alert alert-danger" role="alert">
+          <i class="fas fa-exclamation-triangle"></i>
+          {{ error_message }}
+        </div>
+        {% endif %}
+
+        <!-- Voting Form -->
+        <form action="{% url 'polls:vote' question.id %}" method="post">
+          {% csrf_token %}
+
+          <fieldset>
+            <legend class="h5 mb-3">
+              <i class="fas fa-vote-yea"></i> Cast your vote:
+            </legend>
+
+            <div class="row">
+              {% for choice in choices %}
+              <div class="col-12 mb-3">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="choice"
+                    id="choice{{ forloop.counter }}"
+                    value="{{ choice.id }}"
+                  />
+                  <label
+                    class="form-check-label d-flex justify-content-between align-items-center"
+                    for="choice{{ forloop.counter }}"
+                  >
+                    <span class="flex-grow-1">{{ choice.choice_text }}</span>
+                    <span class="badge bg-light text-dark ms-2">
+                      {{ choice.votes }} vote{{ choice.votes|pluralize }}
+                    </span>
+                  </label>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </fieldset>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-check"></i> Submit Vote
+            </button>
+            <a
+              href="{% url 'polls:results' question.id %}"
+              class="btn btn-outline-secondary"
+            >
+              <i class="fas fa-chart-bar"></i> View Results
+            </a>
+            <a href="{% url 'polls:index' %}" class="btn btn-outline-primary">
+              <i class="fas fa-arrow-left"></i> Back to Polls
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <!-- Quick Actions -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-bolt"></i> Quick Actions
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a
+            href="{% url 'polls:results' question.id %}"
+            class="btn btn-outline-info"
+          >
+            <i class="fas fa-chart-pie"></i> View Results
+          </a>
+          {% if user.is_authenticated and user == question.author %}
+          <a
+            href="{% url 'polls:question_edit' question.id %}"
+            class="btn btn-outline-warning"
+          >
+            <i class="fas fa-edit"></i> Edit Question
+          </a>
+          {% endif %}
+          <a
+            href="{% url 'polls:api_questions' %}"
+            class="btn btn-outline-secondary"
+          >
+            <i class="fas fa-code"></i> API Data
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Card -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-chart-bar"></i> Poll Statistics
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>Total Votes:</span>
+            <strong>{{ total_votes }}</strong>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>Options:</span>
+            <strong>{{ choices.count }}</strong>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>Published:</span>
+            <strong>{{ question.pub_date|timesince }} ago</strong>
+          </div>
+        </div>
+        {% if question.was_published_recently %}
+        <div class="alert alert-success alert-sm" role="alert">
+          <i class="fas fa-fire"></i> Hot! Published recently
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Category Info -->
+    {% if question.category %}
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0"><i class="fas fa-tag"></i> Category</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <span class="badge me-2 bg-primary">
+            {% if question.category.icon %}
+            <i class="{{ question.category.icon }}"></i>
+            {% endif %} {{ question.category.name }}
+          </span>
+        </div>
+        {% if question.category.description %}
+        <p class="small text-muted mb-2">{{ question.category.description }}</p>
+        {% endif %}
+        <a
+          href="{% url 'polls:category_detail' question.category.slug %}"
+          class="btn btn-sm btn-outline-primary"
+        >
+          <i class="fas fa-folder-open"></i> View Category
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %} {% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Add hover effects to radio buttons
+    const radioInputs = document.querySelectorAll('input[type="radio"]');
+    radioInputs.forEach((input) => {
+      const label = input.nextElementSibling;
+
+      input.addEventListener("change", function () {
+        // Reset all labels
+        radioInputs.forEach((r) => {
+          r.nextElementSibling.classList.remove("bg-primary", "text-white");
+        });
+
+        // Highlight selected
+        if (this.checked) {
+          label.classList.add("bg-primary", "text-white");
+        }
+      });
+    });
+
+    // Form validation
+    const form = document.querySelector("form");
+    form.addEventListener("submit", function (e) {
+      const checkedRadio = document.querySelector(
+        'input[name="choice"]:checked'
+      );
+      if (!checkedRadio) {
+        e.preventDefault();
+        alert("Please select an option before voting.");
+      }
+    });
+  });
+</script>
+{% endblock %}

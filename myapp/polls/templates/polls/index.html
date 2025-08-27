@@ -1,10 +1,224 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Polls</title>
-  </head>
-  <body>
-    <h1>Welcome to Polls</h1>
-    <p>This is a sample template for the polls app.</p>
-  </body>
-</html>
+{% extends 'polls/base.html' %}
+
+{% block title %}Home - Django Polls{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="display-4 mb-0">
+                    <i class="fas fa-poll text-primary"></i> Latest Polls
+                </h1>
+                <p class="text-muted">{{ total_questions }} total questions available</p>
+            </div>
+            <div>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'polls:question_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Poll
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="search" class="form-label">Search Questions</label>
+                        <input type="text" class="form-control" id="search" name="q" 
+                               value="{{ search_query }}" placeholder="Search questions or choices...">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="category" class="form-label">Filter by Category</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category.slug }}" 
+                                        {% if category_filter == category.slug %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Questions List -->
+        {% if page_obj %}
+            <div class="row">
+                {% for question in page_obj %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card h-100 card-hover">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    {% if question.category %}
+                                        <span class="badge category-badge bg-primary">
+                                            {% if question.category.icon %}
+                                                <i class="{{ question.category.icon }}"></i>
+                                            {% endif %}
+                                            {{ question.category.name }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    {{ question.pub_date|date:"M d, Y" }}
+                                </small>
+                            </div>
+                            
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <a href="{% url 'polls:detail' question.id %}" 
+                                       class="text-decoration-none">
+                                        {{ question.question_text }}
+                                    </a>
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between text-muted small">
+                                        <span>
+                                            <i class="fas fa-list"></i>
+                                            {{ question.choices.count }} choice{{ question.choices.count|pluralize }}
+                                        </span>
+                                        <span>
+                                            <i class="fas fa-vote-yea"></i>
+                                            {{ question.total_votes }} vote{{ question.total_votes|pluralize }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {% if question.author %}
+                                    <div class="mb-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-user"></i>
+                                            by {{ question.author.username }}
+                                        </small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="card-footer bg-transparent">
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'polls:detail' question.id %}" 
+                                       class="btn btn-primary btn-sm flex-fill">
+                                        <i class="fas fa-vote-yea"></i> Vote Now
+                                    </a>
+                                    <a href="{% url 'polls:results' question.id %}" 
+                                       class="btn btn-outline-secondary btn-sm flex-fill">
+                                        <i class="fas fa-chart-bar"></i> Results
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="Questions pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <!-- No Questions Found -->
+            <div class="text-center py-5">
+                <i class="fas fa-poll fa-3x text-muted mb-3"></i>
+                <h3 class="text-muted">No polls found</h3>
+                {% if search_query or category_filter %}
+                    <p>No polls match your current filters.</p>
+                    <a href="{% url 'polls:index' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </a>
+                {% else %}
+                    <p>Be the first to create a poll!</p>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'polls:question_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create First Poll
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Stats Section -->
+<div class="row mt-5">
+    <div class="col-lg-12">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-md-3">
+                        <i class="fas fa-poll fa-2x text-primary mb-2"></i>
+                        <h4>{{ total_questions }}</h4>
+                        <small class="text-muted">Total Polls</small>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-tags fa-2x text-info mb-2"></i>
+                        <h4>{{ categories.count }}</h4>
+                        <small class="text-muted">Categories</small>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-users fa-2x text-success mb-2"></i>
+                        <h4>Active</h4>
+                        <small class="text-muted">Community</small>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-chart-line fa-2x text-warning mb-2"></i>
+                        <h4>Live</h4>
+                        <small class="text-muted">Real-time Results</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
